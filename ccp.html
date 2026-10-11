@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Load the official Amazon Connect Streams API -->
+    <script src="https://amazon-connect.github.io/amazon-connect-streams/release/connect-streams-min.js"></script>
+</head>
+<body>
+<div id="container-div" style="width: 100%; height: 500px;"></div>
+
+<script>
+    // 1. Initialize Amazon Connect
+    function initConnect(instanceAlias) {
+        connect.core.initCCP(document.getElementById("container-div"), {
+            ccpUrl: `https://${instanceAlias}.my.connect.aws/ccp-v2/`,
+            loginPopup: true, // Allows the agent to log in to AWS/Salesforce SSO
+            softphone: { allowFramedSoftphone: true }
+        });
+
+        // Listen for incoming calls
+        connect.contact(function(contact) {
+            contact.onConnecting(function() {
+                // Send message back to Flutter
+                ConnectBridge.postMessage("INCOMING_CALL:" + contact.getContactId());
+            });
+        });
+    }
+
+    // 2. Change Agent Status (Triggered by Flutter)
+    function setAgentStatus(statusName) {
+        connect.agent(function(agent) {
+            let routableState = agent.getAgentStates().find(s => s.name === statusName);
+            if (routableState) {
+                agent.setState(routableState, {
+                    success: function() { ConnectBridge.postMessage("STATUS_CHANGED:" + statusName); },
+                    failure: function() { ConnectBridge.postMessage("STATUS_FAILED"); }
+                });
+            }
+        });
+    }
+
+    // 3. Call Controls (Triggered by Flutter)
+    function acceptCall() {
+        connect.contact(function(contact) { contact.accept(); });
+    }
+    function endCall() {
+        connect.contact(function(contact) { contact.clear(); });
+    }
+</script>
+</body>
+</html>
