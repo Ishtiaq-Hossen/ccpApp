@@ -3,6 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- FIX FOR ANDROID WEBVIEW CRASH -->
+    <script>
+        if (typeof window.SharedWorker === 'undefined') {
+            window.SharedWorker = function(url, options) {
+                return new Worker(url, options);
+            };
+        }
+    </script>
+    
     <!-- Load the official Amazon Connect Streams API -->
     <script src="https://amazon-connect.github.io/amazon-connect-streams/release/connect-streams-min.js"></script>
 </head>
